@@ -45,6 +45,13 @@ Android / macOS / iOS / Windows 安装包，同时在本仓库创建 Release。
 > ⚠️ **签名密钥必须离线备份。** Android 只允许同签名的 APK 覆盖安装；
 > 密钥丢失后已安装用户将无法升级，只能卸载重装。
 >
+> **当前已备份到**：`bero_de:/root/backup/selene-signing/`（批次 `20261008T025904Z`）。
+> GitHub Actions secret 只能写、不能读回，因此该备份是这批凭据唯一可恢复的副本。
+> 归档内含密钥库、口令、接线文件与校验和，恢复步骤见其 `README.md`。
+> 建议再复制一份到离线介质（U 盘 / 密码管理器）。
+>
+> 证书 SHA-256：`F5:74:D7:91:8E:5B:97:6B:14:FA:2D:F7:4A:7F:8E:AD:73:CA:DE:D4:4D:2B:8B:E5:1D:36:CE:11:CA:44:09:61`
+>
 > 产物仅含 v2 签名方案（`flutter.minSdkVersion` 为 24，
 > AGP 对 minSdk ≥ 24 默认不再生成 v1/JAR 签名），
 > 因此要求 **Android 7.0 (API 24) 及以上**，这与应用声明的最低版本一致。
