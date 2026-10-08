@@ -23,10 +23,33 @@
 推送 `v*` 标签或手动触发 `workflow_dispatch`，会从源码仓库克隆代码并产出
 Android / macOS / iOS / Windows 安装包，同时在本仓库创建 Release。
 
-> 该工作流默认从 `jiam9069/Selene-Source` 拉取源码，**无需配置任何 secret**。
+> 该工作流默认从 `jiam9069/Selene-Source` 拉取源码，**拉源码无需任何 secret**。
 > 如需改为其它源码仓库，设置仓库变量 `SOURCE_REPO`（`owner/repo`）即可；
 > 若源码仓库是私有的，再额外配置 `PULL_TOKEN`。
-> Android 签名可选：未配置 `SIGNING_KEY` 等 secret 时使用调试签名。
+
+### Android 正式签名
+
+已配置完成，Android 产物使用正式密钥签名（不再是 debug 签名）。
+所需的 4 个 secret 均已写入本仓库：
+
+| Secret | 说明 |
+|---|---|
+| `SIGNING_KEY` | 密钥库文件的 Base64 |
+| `KEY_STORE_PASSWORD` | 密钥库口令 |
+| `KEY_PASSWORD` | 密钥口令（PKCS12 与库口令相同）|
+| `ALIAS` | 密钥别名 |
+
+工作流会把密钥库写到 `key.jks`、生成 `android/key.properties`，
+`android/app/build.gradle.kts` 检测到该文件后自动使用 release 签名配置。
+
+> ⚠️ **签名密钥必须离线备份。** Android 只允许同签名的 APK 覆盖安装；
+> 密钥丢失后已安装用户将无法升级，只能卸载重装。
+>
+> 产物仅含 v2 签名方案（`flutter.minSdkVersion` 为 24，
+> AGP 对 minSdk ≥ 24 默认不再生成 v1/JAR 签名），
+> 因此要求 **Android 7.0 (API 24) 及以上**，这与应用声明的最低版本一致。
+>
+> 未配置上述 secret 时工作流会回退到 debug 签名（仅用于本地验证，不可分发）。
 
 ### 相对上游的适配内容
 
