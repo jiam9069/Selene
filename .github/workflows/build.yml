@@ -95,7 +95,32 @@ jobs:
 
       - name: Setup Android SDK
         if: matrix.name == 'android'
-        uses: android-actions/setup-android@v3
+        # 原先用 android-actions/setup-android@v3，该 action 会执行
+        # `sdkmanager tools`，而新版 cmdline-tools 已不再提供 `tools` 包，
+        # 导致 "Failed to find package 'tools'" 并使 Android 构建必然失败。
+        # ubuntu runner 自带 Android SDK 与 cmdline-tools，这里直接复用它。
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          if [ ! -d "$SDK_ROOT" ]; then
+            echo "::error::未找到 Android SDK: $SDK_ROOT"
+            exit 1
+          fi
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+
+          SDKMGR="$(find "$SDK_ROOT/cmdline-tools" -maxdepth 3 -name sdkmanager -type f 2>/dev/null | sort | tail -1)"
+          if [ -z "$SDKMGR" ]; then
+            echo "::error::未找到 sdkmanager（cmdline-tools 缺失）"
+            exit 1
+          fi
+          echo "$(dirname "$SDKMGR")" >> "$GITHUB_PATH"
+
+          # 预先接受许可，避免后续安装 NDK 时卡在交互提示
+          yes | "$SDKMGR" --licenses > /dev/null 2>&1 || true
+          "$SDKMGR" --version
+          echo "Android SDK 就绪: $SDK_ROOT"
+        shell: bash
 
       - name: Cache Gradle
         if: matrix.name == 'android'
