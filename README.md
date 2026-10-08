@@ -6,6 +6,50 @@
 
 > 🎬 **Selene** 是以 [MoonTV](https://github.com/MoonTechLab/LunaTV) v100 版本 / [Helios](https://github.com/MoonTechLab/Helios) 为后端的客户端，保证原汁原味的同时，优化了移动端和桌面端操作体验。它基于 **Flutter** 构建，目前支持 Android、iOS、macOS 和 Windows 平台。
 
+---
+
+## 🔧 本仓库说明（MoonTVPlus 适配分支）
+
+这是 [MoonTechLab/Selene](https://github.com/MoonTechLab/Selene) 的 fork，
+在保留原版后端兼容性的前提下，**新增对 [MoonTVPlus](https://github.com/mtvpls/MoonTVPlus) 后端的适配**。
+
+| 项目 | 说明 |
+|---|---|
+| 本仓库（构建/发布） | `jiam9069/Selene` |
+| Flutter 源码 | [`jiam9069/Selene-Source`](https://github.com/jiam9069/Selene-Source) |
+| 上游客户端 | [MoonTechLab/Selene](https://github.com/MoonTechLab/Selene) |
+
+构建由 [`.github/workflows/build.yml`](.github/workflows/build.yml) 完成：
+推送 `v*` 标签或手动触发 `workflow_dispatch`，会从源码仓库克隆代码并产出
+Android / macOS / iOS / Windows 安装包，同时在本仓库创建 Release。
+
+> 该工作流默认从 `jiam9069/Selene-Source` 拉取源码，**无需配置任何 secret**。
+> 如需改为其它源码仓库，设置仓库变量 `SOURCE_REPO`（`owner/repo`）即可；
+> 若源码仓库是私有的，再额外配置 `PULL_TOKEN`。
+> Android 签名可选：未配置 `SIGNING_KEY` 等 secret 时使用调试签名。
+
+### 相对上游的适配内容
+
+针对 MoonTVPlus 与原版 MoonTV v100 的接口差异，客户端做了如下适配
+（完整说明见源码仓库的 `docs/MoonTVPlus-适配说明.md`）：
+
+- **Emby 私人影库可搜可播**：搜索结果里 Emby 条目的 `episodes` 恒为空，
+  且 `/api/detail` 对 `emby_*` 源返回「无效的API来源」；现在会自动回源
+  `/api/emby/detail` 取回真实播放地址。
+- **登录态自动续期**：MoonTVPlus 的 access token 只有 4 小时有效期，
+  过期后所有接口 401；现在会用 Refresh Token 自动换发并重试，不再频繁掉登录。
+- **`proxyMode` 代理播放**：源开启代理模式时，m3u8 自动改走服务器中转。
+- **相对播放地址补全**：私人影库（OpenList）等源返回的站内相对地址会被补全为绝对地址。
+- **源类型容错**：跳过 `/api/search/resources` 中的源脚本条目，避免本地搜索拿到空地址空等超时。
+- **修复连接检查**：`/api/health` 在 MoonTV v100 与 MoonTVPlus 上都不存在，改用 `/api/server-config`。
+- **新增网络直播**：接入 MoonTVPlus 的 WebLive，支持虎牙 / B站 / 抖音直播间。
+- **新增 AI 问片**：接入 `/api/ai/chat` 的流式对话，后台开启时在用户菜单显示入口。
+
+> 后端能力通过 `GET /api/server-config` 自动探测：识别为 MoonTVPlus 且
+> 开启了对应开关时才展示入口，因此**原版 MoonTV v100 / Helios 后端仍可正常使用**。
+
+---
+
 <div align="center">
 
 ![Flutter](https://img.shields.io/badge/Flutter-3.4.3+-02569B?logo=flutter)
@@ -39,7 +83,7 @@
   <img src="screenshot/Screenshot_14.png" alt="项目截图">
 </details>
 
-源码见 https://github.com/MoonTechLab/Selene-Source
+源码见 https://github.com/jiam9069/Selene-Source （上游为 https://github.com/MoonTechLab/Selene-Source ）
 
 ### 请不要在 B站、小红书、微信公众号、抖音、今日头条或其他中国大陆社交平台发布视频或文章宣传本项目，不授权任何“科技周刊/月刊”类项目或站点收录本项目。
 
@@ -128,3 +172,4 @@
 </div>
 
 [![Star History Chart](https://api.star-history.com/svg?repos=MoonTechLab/Selene&type=Date)](https://www.star-history.com/#MoonTechLab/Selene&Date)
+

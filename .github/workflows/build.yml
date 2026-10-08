@@ -41,9 +41,23 @@ jobs:
       version: ${{ steps.get_version.outputs.version }}
 
     steps:
-      - name: Clone repository
+      - name: Clone source repository
+        # 源码仓库（Selene-Source 的 fork）与发布仓库分离：
+        # 本仓库只负责构建与发布，Flutter 源码在 SOURCE_REPO 中。
+        # 默认指向适配 MoonTVPlus 的 fork；如需更换，设置仓库变量 SOURCE_REPO 即可。
+        # 该仓库是公开的，因此无需任何 secret 也能构建（私有仓库再配 PULL_TOKEN）。
+        env:
+          SOURCE_REPO: ${{ vars.SOURCE_REPO }}
+          SOURCE_TOKEN: ${{ secrets.PULL_TOKEN }}
         run: |
-          git clone https://${{ secrets.PULL_TOKEN }}@${{ secrets.REPO_URL }}.git .
+          set -euo pipefail
+          REPO="${SOURCE_REPO:-jiam9069/Selene-Source}"
+          if [ -n "${SOURCE_TOKEN:-}" ]; then
+            git clone --depth 1 "https://x-access-token:${SOURCE_TOKEN}@github.com/${REPO}.git" .
+          else
+            git clone --depth 1 "https://github.com/${REPO}.git" .
+          fi
+          echo "已克隆源码仓库: ${REPO}"
         shell: bash
 
       - name: Get version from pubspec.yaml
