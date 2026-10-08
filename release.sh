@@ -111,6 +111,12 @@ run_local_gates() {
      && [ -x /root/DSH/tools/flutter/bin/flutter ]; then
     flutter_bin=/root/DSH/tools/flutter/bin/flutter
   fi
+  # 必须解析成绝对路径：FLUTTER_BIN 未设时 flutter_bin 只是相对名 "flutter"，
+  # 而下面的 dart_bin 由 dirname "$flutter_bin" 推导，相对名会让 dirname 返回 "."
+  # 并把 dart 拼成 <当前工作区>/cache/dart-sdk/bin/dart（不存在，exit 127）。
+  if command -v "$flutter_bin" >/dev/null 2>&1; then
+    flutter_bin="$(command -v "$flutter_bin")"
+  fi
   log "本地门禁: shell 测试"
   bash "$SRC_DIR/test/ci_config_test.sh"
   bash "$SRC_DIR/test/build_sh_parallel_failure_test.sh"
