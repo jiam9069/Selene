@@ -15,7 +15,59 @@ permissions:
   actions: write
 
 jobs:
+  # 质量门禁：源码 analyze/test 不绿就不构建（原先只有构建，测试全靠本地）。
+  # 测试跑在源码仓库默认分支上；E2E（moontvplus_e2e_test.dart）无
+  # MOONTVPLUS_E2E=1 环境变量时自动跳过，不依赖真实后端。
+  test:
+    runs-on: ubuntu-latest
+    name: Analyze & Test
+
+    steps:
+      - name: Clone source repository
+        env:
+          SOURCE_REPO: ${{ vars.SOURCE_REPO }}
+          SOURCE_TOKEN: ${{ secrets.PULL_TOKEN }}
+        run: |
+          set -euo pipefail
+          REPO="${SOURCE_REPO:-jiam9069/Selene-Source}"
+          if [ -n "${SOURCE_TOKEN:-}" ]; then
+            git clone --depth 1 "https://x-access-token:${SOURCE_TOKEN}@github.com/${REPO}.git" .
+          else
+            git clone --depth 1 "https://github.com/${REPO}.git" .
+          fi
+          echo "已克隆源码仓库: ${REPO}"
+        shell: bash
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.0'
+          channel: stable
+          cache: true
+
+      - name: Run shell tests
+        run: |
+          chmod +x test/*.sh
+          bash test/ci_config_test.sh
+          bash test/build_sh_parallel_failure_test.sh
+        shell: bash
+
+      - name: flutter pub get
+        run: flutter pub get
+        shell: bash
+
+      - name: dart analyze
+        # 用 dart analyze 而非 flutter analyze：后者走 LSP，在含 CJK 的路径下
+        # 会因帧长度错位必现崩溃；dart analyze 同一套诊断，warning 致命、info 不致命。
+        run: dart analyze
+        shell: bash
+
+      - name: flutter test
+        run: flutter test
+        shell: bash
+
   build:
+    needs: test
     strategy:
       fail-fast: false
       matrix:
